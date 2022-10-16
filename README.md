@@ -1,70 +1,159 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Create React-Firebase Project with Authentication
 
-## Available Scripts
+A brief description of how to create a react Firebase project with Firebase Authentication.
 
-In the project directory, you can run:
 
-### `npm start`
+## Procedure
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+#### Here we'll create Authentication following this [tutorial](https://youtu.be/LCAXfjb0oYo)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+ 1. Goto this url [console.firebase.google.com](https://console.firebase.google.com/)
+ 2. Create a new project
+ 3. Now select `Authentication` 
+ from left panel and from `Sign-in method` tab select 
+ `Email/Password`
 
-### `npm test`
+ 4. After that, select `Firestore Database` from left panel 
+ and create a database (Production/Test mode).
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+ 5. From `Project Settings` add a Web App. After adding 
+ app we'll get a configuration. Inside `src>lib>init-firebase.js`
+ add these configuration code.
 
-### `npm run build`
+***init-firebase.js***
+```bash
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDVCFNDhnqiy-viEO6C_MrpBXoHftFnVQw",
+  authDomain: "react-firebase-c2319.firebaseapp.com",
+  projectId: "react-firebase-c2319",
+  storageBucket: "react-firebase-c2319.appspot.com",
+  messagingSenderId: "440229316033",
+  appId: "1:440229316033:web:ab7170bfe7b331f3399b40",
+  measurementId: "G-V1QPMHNXH2"
+};
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+//const analytics = getAnalytics(app);
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+6. Now install the following packages for firebase and routing
 
-### `npm run eject`
+```bash
+npm install firebase
+npm install react-router-dom
+```
+To manage Authentication state of the user install this package
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+npm install react-firebase-hooks
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+7. import getAuth from firebase in ***init-firebase.js***
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+import {getAuth} from 'firebase/auth'
+....
+const auth=getAuth(app);
+export {auth}
+```
+8. Now create ***SignIn.jsx*** and ***Home.jsx*** pages with 
+following codes. Here if successfully signed In from SignIn
+page then it'll redirect to the home page. Then user can logout from home page.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
 
-## Learn More
+***SignIn.jsx***
+```bash
+import React, { useState } from 'react'
+import {signInWithEmailAndPassword,createUserWithEmailAndPassword} from 'firebase/auth'
+import { auth } from '../lib/init-firebase'
+import { useNavigate } from 'react-router-dom'
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+const SignIn = () => {
+    const navigate=useNavigate()
+    const [email,setEmail]=useState('')
+    const [password,setPassword]=useState('')
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+    const signIn=()=>{
+        signInWithEmailAndPassword(auth,email,password)
+            .then(auth => {navigate('/home')})
+            .catch(error=>console.error(error))
+    }
+    const register=()=>{
+        createUserWithEmailAndPassword(auth,email,password)
+            .then(auth=> {navigate('/home')})
+            .catch(error=>console.error(error))
+    }
+  return (
+    <div>
+        <h1>Sign in </h1>
+        <label>Email</label>
+        <input className='email' onChange={e=>setEmail(e.target.value)}/>
+        <label>Password</label>
+        <input className='password' onChange={e=>setPassword(e.target.value)}/>
+        <button onClick={signIn}>Sign In</button>
+        <button onClick={register}>Register</button>
+    </div>
+  )
+}
 
-### Code Splitting
+export default SignIn
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+***Home.jsx***
+```bash
+import React from 'react'
+import {useAuthState} from 'react-firebase-hooks/auth'
+import { auth } from '../lib/init-firebase'
+import { useNavigate } from 'react-router-dom'
 
-### Analyzing the Bundle Size
+const Home = () => {
+    const navigate=useNavigate()
+    const [user,loading,error]=useAuthState(auth)
+    console.log(user)
+  return (
+    <div>
+        <h1>
+            welcome {user?.email}
+        </h1> 
+        <button onClick={()=>{auth.signOut(); navigate('/')}}>
+            SignOut
+        </button>
+    </div>
+  )
+}
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+export default Home
+```
+9. Now add routing code in ***App.js***
+```bash
+import './App.css';
+import Home from './pages/Home';
+import SignIn from './pages/SignIn'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-### Making a Progressive Web App
+function App() {
+  return (
+    <div className="App">
+      <BrowserRouter>
+      <Routes>
+        <Route path="/home" element={<Home/>}/>
+        <Route path="/" element={<SignIn />} />
+      </Routes>
+    </BrowserRouter>
+    </div>
+  );
+}
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+export default App;
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```
