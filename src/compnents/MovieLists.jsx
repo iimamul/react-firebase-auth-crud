@@ -1,12 +1,13 @@
 import React, { useState,useEffect } from 'react'
-import { collection,getDocs } from 'firebase/firestore'
+import { collection,deleteDoc,doc,getDocs } from 'firebase/firestore'
 import { db } from '../lib/init-firebase'
+import { movieCollectionRef } from '../lib/firestore.collections'
 
 const MovieLists = () => {
     const [movies, setMovies] = useState([])
 
     const getMovies=()=>{
-        const movieCollectionRef=collection(db,'movies')
+        // const movieCollectionRef=collection(db,'movies')
         getDocs(movieCollectionRef)
             .then(res=>{
                 console.log(res.docs)
@@ -24,6 +25,14 @@ const MovieLists = () => {
     
     }, [])
     
+    const deleteMovie=(id)=>{
+        const docRef=doc(db,'movies',id)
+        deleteDoc(docRef)
+            .then(()=>console.log('Document deleted.'))
+            .catch(err=>console.log(err.message))
+
+        alert(id)
+    }
 
   return (
     <div>
@@ -34,7 +43,10 @@ const MovieLists = () => {
         <ul>
             {
                 movies.map(movie=>(
-                    <li key={movie.id}>{movie.data.name}</li>
+                        <li key={movie.id}>
+                            {movie.data.name } : {movie.id}
+                            <button onClick={()=>deleteMovie(movie.id)}>Delete</button>    
+                        </li>
                 ))
             }
         </ul>
